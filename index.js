@@ -11,15 +11,17 @@ app.use(express.json());
 const users = [
   {
     id: 1,
-    name: "user1",
-    email: "X4E5w@example.com",
-    password: bcrypt.hashSync("1234", 10),
+    username: "john_doe",
+    email: "john.doe@example.com",
+    role: "user",
+    password: bcrypt.hashSync("password123", 10),
   },
   {
     id: 2,
-    name: "user2",
-    email: "test@example.com",
-    password: bcrypt.hashSync("Xdfio23", 10),
+    username: "admin_user",
+    email: "admin@example.com",
+    role: "admin",
+    password: bcrypt.hashSync("adminpassword789", 10),
   },
 ];
 
@@ -57,6 +59,23 @@ app.post("/login", async (req, res) => {
     res.json({ token });
   } catch (error) {
     console.error("Error during login:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.put("/update-role", authenticateJWT, (req, res) => {
+  try {
+    const { userId, userRole } = req.body;
+    const user = users.find((user) => user.id === userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.role = userRole;
+    res.json({ message: "User role updated successfully", user });
+  } catch (error) {
+    console.error("Error updating user role:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

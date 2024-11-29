@@ -99,6 +99,27 @@ app.put("/update-email", authenticateJWT, (req, res) => {
   }
 });
 
+app.delete("/delete-account", authenticateJWT, (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const userIndex = users.findIndex((user) => user.id === userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const deletedUsers = users.filter((user) => user.id !== userId);
+
+    users.length = 0;
+    users.push(...deletedUsers);
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

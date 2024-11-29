@@ -31,6 +31,14 @@ if (!jwtSecret) {
 
 app.post("/login", async (req, res) => {
   try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+    }
+
     const user = users.find((user) => user.email === email);
 
     if (!user) {
@@ -48,6 +56,45 @@ app.post("/login", async (req, res) => {
 
     res.json({ token });
   } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+function authenticateJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader) {
+    const token = authHeader.substring(7, authHeader.length);
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        return res
+          .status(403)
+          .json({ message: "Forbidden: Invalid or expired token" });
+      }
+      req.user = user;
+      next();
+    });
+  } else {
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
+  }
+}
+
+app.put("/update-email", authenticateJWT, (req, res) => {
+  try {
+    const { email } = req.body;
+    const userId = req.user.userId;
+
+    const user = users.find((user) => user.id === userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.email = email;
+    res.json({ message: "Email updated successfully", user });
+  } catch (error) {
+    console.error("Error updating email:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
